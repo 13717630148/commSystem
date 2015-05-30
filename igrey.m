@@ -1,4 +1,4 @@
-function sequence = grey(input_sequence)
+function sequence = igrey(input_sequence)
 
 % check for validility
 if mod(length(input_sequence), 4) ~=0
@@ -18,34 +18,34 @@ switch testSymbol
 		group_sequence(:) = [0 0 0 0];
 	case '0001' 
 		group_sequence(:) = [0 0 0 1];
-	case '0010' 
-		group_sequence(:) = [0 0 1 1];
 	case '0011' 
 		group_sequence(:) = [0 0 1 0];
-	case '0100' 
-		group_sequence(:) = [0 1 1 0];
-	case '0101' 
-		group_sequence(:) = [0 1 1 1];
+	case '0010' 
+		group_sequence(:) = [0 0 1 1];
 	case '0110' 
-		group_sequence(:) = [0 1 0 1];
-	case '0111' 
 		group_sequence(:) = [0 1 0 0];
-	case '1000' 
-		group_sequence(:) = [1 1 0 0];
-	case '1001' 
-		group_sequence(:) = [1 1 0 1];
-	case '1010' 
-		group_sequence(:) = [1 1 1 1];
-	case '1011' 
-		group_sequence(:) = [1 1 1 0];
+	case '0111' 
+		group_sequence(:) = [0 1 0 1];
+	case '0101' 
+		group_sequence(:) = [0 1 1 0];
+	case '0100' 
+		group_sequence(:) = [0 1 1 1];
 	case '1100' 
-		group_sequence(:) = [1 0 1 0];
+		group_sequence(:) = [1 0 0 0];
 	case '1101' 
-		group_sequence(:) = [1 0 1 1];
-	case '1110' 
 		group_sequence(:) = [1 0 0 1];
 	case '1111' 
-		group_sequence(:) = [1 0 0 0];
+		group_sequence(:) = [1 0 1 0];
+	case '1110' 
+		group_sequence(:) = [1 0 1 1];
+	case '1010' 
+		group_sequence(:) = [1 1 0 0];
+	case '1011' 
+		group_sequence(:) = [1 1 0 1];
+	case '1001' 
+		group_sequence(:) = [1 1 1 0];
+	case '1000' 
+		group_sequence(:) = [1 1 1 1];
 end
 
 input_sequence((iGroup - 1) * 4 + 1: (iGroup - 1) * 4 + 4) = group_sequence;

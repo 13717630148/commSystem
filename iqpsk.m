@@ -1,7 +1,7 @@
 function output_sequence = iqpsk(received_qpsk, number)
 
 % get the needed results
-output_sequence = zeros(number * 2, 1)
+output_sequence = zeros(number * 2, 1);
 
 for iGroup = 1: 1: number
 	if real(received_qpsk(iGroup)) > 0 && imag(received_qpsk(iGroup)) > 0 
