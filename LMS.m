@@ -11,8 +11,12 @@ mu_unified = mu / (c0 + sum(raw_output' * raw_output) ...
     / nWeight);
 % append nWeight zeros to enable the calculations
 raw_output = [zeros(nWeight - 1, 1); raw_output];
+
 % loop until convergence
 lastTimeError = 0;
+recordError = zeros(1000, 1);
+count = 1;
+
 while 1
     % renew the raw output
     predict_output = zeros(length(true_output), 1);
@@ -29,7 +33,11 @@ while 1
     end
     
     lastTimeError = sum(target_error' * target_error);
-    %fprintf('The overall error is now %f\n', lastTimeError);
+    if count <= 10000
+        recordError(count) = lastTimeError;
+        count = count + 1;
+    end
+    fprintf('The overall error is now %f\n', lastTimeError);
     
     for iWeight = 1: 1: nWeight
         % get the unifying descedent steps and decent
@@ -37,6 +45,10 @@ while 1
         weight(iWeight) = weight(iWeight) + 2 * mu_unified * descent;
     end
 end
-
+%figure(3)
+%plot(recordError(1: count - 1));
+%title('The error during the training')
+%box on
+%grid on
 
 
