@@ -14,7 +14,7 @@ guardInterval = [1/4 1/8 1/16 1/32];
 lCp = round(nCarriers * guardInterval(2));
 
 % Data Generation
-nDataset = 10; % the data should be round times of the carrier numbers 1705 for 
+nDataset = 100; % the data should be round times of the carrier numbers 1705 for 
                % simplicity
 nTraining = 1;
 QPSKmode = 2; % 2 for qpsk, 1 for bpsk
@@ -26,11 +26,11 @@ ich = ich ./ sqrt(2);
 qch = qch ./ sqrt(2);
 
 % plot the input symbols
-inputSymbol = ich + 1j*qch;              % Complex modulated data
+inputSymbol = ich + 1j * qch;              % Complex modulated data
 %scatterplot(inputSymbol);
 
 % the channel symbol with CP as guardian interval
-channelSymbol = zeros(length(inputSymbol) + lCp * (nDataset + nTraining), 1);
+channelSymbol = zeros((nCarriers + lCp) * (nDataset + nTraining), 1);
 
 % from sequencial to parallel
 for iSets = 1: 1: nDataset + nTraining
@@ -41,45 +41,52 @@ for iSets = 1: 1: nDataset + nTraining
         - 2 + 1: iSets * kCarriers);
 
     % get the channel symbol, and add the cp
-    channelSymbol(lCp + 1 + (iSets - 1) * nCarriers: lCp + iSets * nCarriers) ...
+    channelSymbol(lCp + 1 + (iSets - 1) * (nCarriers + lCp): iSets * (nCarriers + lCp)) ...
         = ifft(tempSets);
-    channelSymbol(1: lCp) = channelSymbol(end - lCp + 1, end);
+    channelSymbol(1 + (iSets - 1) * (nCarriers + lCp): lCp + (iSets - 1) * (nCarriers + lCp)) = ...
+        channelSymbol(iSets * (nCarriers + lCp) - lCp + 1: iSets * (nCarriers + lCp));
 end
 % freqPlot = fft(channelSymbol);
 
 % channel parameters
 n = round(1.8e-6 / TU * (nCarriers + lCp));
-h = zeros(length(channelSymbol), 1);
+h = zeros(n, 1);
 h(1) = 1;
-%h(n) = 10 ^ (-10 / 20);
+h(n) = 10 ^ (-10 / 20);
 
+for iSNR = 6: 1: 15
 % at the receiving end of the ofdm
-receive = filter(channelSymbol, 1, h);
-receive = awgn(receive,10,'measured');
+receive = conv(h2, channelSymbol);
+receive = awgn(receive, iSNR, 'measured');
 
 
 coefficient = zeros(kCarriers, 1);
+error = 0;
+totalNumber = 0;
 for iSets = 1: 1: nDataset + nTraining
 
     tempSets = zeros(nCarriers, 1);
-    tempSets(:) = receive((iSets - 1) * nCarriers + 1 + lCp: ...
-        iSets * nCarriers + lCp);
+    tempSets(:) = receive((iSets - 1) * (nCarriers + lCp) + 1 + lCp: ...
+        iSets * (nCarriers + lCp));
     receiveSymbol = fft(tempSets);
 
     
     trueSymbol = [receiveSymbol(2:854); receiveSymbol(1197:2048)];
     
-%     
     if iSets == 1
-        coefficient = trueSymbol ./ inputSymbol(1: length(trueSymbol))';
+        coefficient = trueSymbol ./ conj(inputSymbol(1: length(trueSymbol)))';
         continue
     end
     
     trueSymbol = trueSymbol ./ coefficient;
 
-    demodata = qpskdemod(real(trueSymbol)', imag(trueSymbol)', 1, ...
+    decodedData = qpskdemod(real(trueSymbol)', imag(trueSymbol)', 1, ...
         kCarriers, QPSKmode);
-    test = data((iSets - 1) * QPSKmode * kCarriers + 1 : ...
+    originalData = data((iSets - 1) * QPSKmode * kCarriers + 1 : ...
             iSets * QPSKmode * kCarriers);
-    [number,ratio] = biterr(demodata, test)
+    [number,ratio] = biterr(decodedData, originalData);
+    error = error + number;
+    totalNumber = totalNumber + kCarriers;
+end
+errorRate = error / totalNumber
 end
