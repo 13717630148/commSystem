@@ -52,20 +52,40 @@ end
 n = round(1.8e-6 / TU * (nCarriers + lCp));
 h = zeros(n, 1);
 h(1) = 1;
+h(n) = 10 ^ (-10 / 20);
+% 
+%  延时(us) 0
+%  1.8
+%  3.6
+%  7.5
+%  19.8
+% 强度(dB) -20
+%  0
+%  -10
+%  -14
+%  -18
+n = round(19.8e-6 / TU * (nCarriers + lCp));
+h2 = zeros(n, 1);
+h2(1) = 10 ^ (-20 / 20);
+h2(round(1.8e-6 / TU * (nCarriers + lCp))) = 10 ^ (0 / 20);
+h2(round(3.6e-6 / TU * (nCarriers + lCp))) = 10 ^ (-10 / 20);
+h2(round(7.5e-6 / TU * (nCarriers + lCp))) = 10 ^ (-14 / 20);
+h2(round(19.8e-6 / TU * (nCarriers + lCp))) = 10 ^ (-18 / 20);
 
-receive = conv(h, channelSymbol);
-receive = awgn(receive, 8, 'measured');
-scatterplot(receive);
-errorRate = zeros(15, 1);
-for iSNR = 1: 1: 15
+errorRateW = zeros(20, 1);
+errorRate = zeros(20, 1);
+
+for iSNR = 1: 1: 20
 % at the receiving end of the ofdm
-receive = channelSymbol;
+receive = conv(h2, channelSymbol);
 receive = awgn(receive, iSNR, 'measured');
 
 
 coefficient = zeros(kCarriers, 1);
 error = 0;
+errorW = 0;
 totalNumber = 0;
+totalNumberW = 0;
 for iSets = 1: 1: nDataset + nTraining
 
     tempSets = zeros(nCarriers, 1);
@@ -81,23 +101,36 @@ for iSets = 1: 1: nDataset + nTraining
         continue
     end
     
-    % without the training data
-    % trueSymbol = trueSymbol ./ coefficient;
+    % without the training data 
+    decodedData = qpskdemod(real(trueSymbol)', imag(trueSymbol)', 1, ...
+        kCarriers, QPSKmode);
+    originalData = data((iSets - 1) * QPSKmode * kCarriers + 1 : ...
+            iSets * QPSKmode * kCarriers);
+    [number,ratio] = biterr(decodedData, originalData);
+    error = error + number;
+    totalNumber = totalNumber + 2 * kCarriers;
+    
+    % with the training data
+    trueSymbol = trueSymbol ./ coefficient;
 
     decodedData = qpskdemod(real(trueSymbol)', imag(trueSymbol)', 1, ...
         kCarriers, QPSKmode);
     originalData = data((iSets - 1) * QPSKmode * kCarriers + 1 : ...
-        iSets * QPSKmode * kCarriers);
-
-    [number,ratio] = biterr(decodedData, originalData);
-    error = error + number;
-    totalNumber = totalNumber + 2 * kCarriers;
+            iSets * QPSKmode * kCarriers);
+    [number,ratio] = biterr(decodedData, originalData)
+    errorW = errorW + number;
+    totalNumberW = totalNumberW + 2 * kCarriers;
 end
+errorRateW(iSNR) = errorW / totalNumberW;
 errorRate(iSNR) = error / totalNumber;
 end
 
-semilogy(1:15, errorRate);
+semilogy(1:20, errorRate);
 box on;
 grid on;
+hold on;
 xlabel('The SNR')
 ylabel('The BER in lognitude')
+
+semilogy(1:20, errorRateW, 'r');
+legend('Without the anti-multipath', 'With the anti-multipath')

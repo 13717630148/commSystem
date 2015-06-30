@@ -26,7 +26,7 @@ qch = qch ./ sqrt(2);
 
 % plot the input symbols
 inputSymbol = ich + 1j*qch;              % Complex modulated data
-%scatterplot(inputSymbol);
+scatterplot(inputSymbol);
 
 % the channel symbol with CP as guardian interval
 lCp = round(nCarriers * guardInterval(2));
@@ -45,11 +45,11 @@ for iSets = 1: 1: nDataset + nTraining
         = ifft(tempSets);
     channelSymbol(1: lCp) = channelSymbol(end - lCp + 1, end);
 end
-figure(1)
+figure(3)
 plot(real(channelSymbol));
-figure(2)
+figure(4)
 freqPlot = fft(channelSymbol);
 plot(real(freqPlot));
-%scatterplot(channelSymbol)
+scatterplot(channelSymbol)
 
 
