@@ -1,4 +1,4 @@
-function prob = prob_show(x, M, s2)
+function prob = prob_show(x, M, sigma)
 %The information of single event, both continous and discrete.
 %
 % Function of this function is to calculate the entropy of a certain 
@@ -11,5 +11,5 @@ prob = 0;
 sym_prob = 1 / M;
 
 for i_symbol = 0: 1: M - 1
-    prob = prob + sym_prob * normpdf(x, i_symbol, s2);
+    prob = prob + sym_prob * normpdf(x, i_symbol, sigma);
 end
