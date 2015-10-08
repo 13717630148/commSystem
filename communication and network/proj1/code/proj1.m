@@ -10,9 +10,8 @@
 % as "sigma2" as a relative parameters, note here the s2 is the standard
 % variantion, instead of its square
 A = 1;
-sigma2 = 0:0.1:30;
-%sigma2 = 10.^(sigma2);
-M = 1:3;
+sigma2 = [0.1:0.01:0.99,1:1:20];
+M = 600:610;
 
 bound_interval = 3; % in the numerical calculation, we consider the 3-sigma
                    % interval in the gaussian distribution
@@ -36,7 +35,7 @@ end
 legend_name = cell(length(M) + 1, 1);
 cmap = hsv(length(M) + 1);  % Creates a 6-by-3 set of colors from the HSV colormap
 for i_M = 1: 1: length(M)
-  plot(sigma2, entropy_y(i_M, :), 'Color', cmap(i_M, :));
+  plot(1 ./ (sigma2.^2), entropy_y(i_M, :), 'Color', cmap(i_M, :));
   hold on;
   box on;
   grid on;
@@ -47,8 +46,8 @@ end
 awgn_entropy = zeros(1, length(sigma2));
 
 for i_variation = 1: 1: length(sigma2)
-    awgn_entropy(i_variation) = 1 / 2 * log2(1 + 1 / sigma2(i_variation));
+    awgn_entropy(i_variation) = 1 / 2 * log2(1 + 1 / sigma2(i_variation)^2);
 end
 legend_name{length(M) + 1} = 'AWGN';
-plot(sigma2, awgn_entropy(:), 'Color', cmap(length(M) + 1, :));
+plot(1 ./ (sigma2 .^2), awgn_entropy(:), 'Color', cmap(length(M) + 1, :));
 legend(legend_name)

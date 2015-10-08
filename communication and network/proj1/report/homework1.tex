@@ -1,0 +1,159 @@
+\documentclass{article}
+\usepackage{CJKutf8}
+\usepackage{multirow}
+\usepackage[cmex10]{amsmath}
+\usepackage{listings}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{epsfig}
+\usepackage{amsopn}
+\usepackage{subfigure}
+\usepackage{cite}
+\usepackage{courier}
+\makeatletter
+\makeatother
+\begin{CJK}{UTF8}{gbsn}
+\usepackage[framed,autolinebreaks,useliterate]{mcode}
+
+\usepackage{graphicx}
+\begin{document}
+\title{通信与网络\\第一次编程作业}
+\author{王亭午，2012011018，无210班}
+\date{2015年10月8号}
+\maketitle
+\section{任务一}
+某信道，输入为M元逻辑符号x：\(s_0,s_1,\cdots,s_{M-1}\)。
+输出y为实数值信道中发生如下事件：
+\(a=f(x)\)到实数的一一映射，当\(x=s_i\)时，\(a=iA\)，A为一给定的正实数，
+\(y=a+n\)，n为一服从\(N(0,s_2)\)分布的独立随机变量（与x独立，且每次信道实现时的n均独立）。\\
+写出信道转移概率。若输入信道的各符号等概出现，求该信道的互信息量I(X;Y)。画出不同信噪比下的互信息量变化的曲线，以M为参数，画一簇曲线（其中加上一条AWGN信道容量曲线作对比）。
+调整函数\(a=f(x)\)，使当\(x=s_i\)时，\(a=iA-b\)，b也为一实常数，在A和s不变的情况下，互信息量随b的变化情况是什么趋势？
+b的取值对互信息量随信噪比的变化曲线的影响？
+\subsection{信道转移概率和互信息量}
+答案：由题可知，这个转移概率是一个简单的条件高斯概率分部，如下
+\begin{equation}
+p(y|x = s_i) = \frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{(x-iA)^2}{2\sigma^2}}
+\end{equation}
+其中\(\sigma^2 = s_2\)。\\
+互信息量的求解如下
+\begin{equation}
+\begin{aligned}
+I(X;Y) & = H(Y) - H(Y|X)\\
+	   & = -\int_{p(y) \neq 0, -\infty}^{\infty}p(y)\mbox{log}p(y)dy - \frac{1}{2}\mbox{log}(1 + \frac{P}{N})\\
+	   & = -\int_{p(y) \neq 0, -\infty}^{\infty}p(y)\mbox{log}p(y)dy - \frac{1}{2}\mbox{log}(1 + s_2)
+\end{aligned}
+\end{equation}
+其中\(p(y)\)的求解如下
+\begin{equation}
+\begin{aligned}
+p(y) &= \frac{1}{M}\sum\limits_{i = 0}^{M}p(y|x = s_i)\\
+	 &= \frac{1}{M}\sum\limits_{i = 0}^{M}\frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{(x-iA)^2}{2\sigma^2}}
+\end{aligned}
+\end{equation}
+从上面的式子(1)，(2)，我们可以知道，上面的mutual information可以通过数值计算的方法得到，代码如下：
+\begin{lstlisting}
+for i_M = 1: 1: length(M)
+    for i_variation = 1: 1: length(sigma2)
+        entropy_y(i_M, i_variation) = ...
+            integral(@(x)entropy_type1(x, M(i_M), sigma2(i_variation)), ...
+            0 - 3 * sigma2(i_variation), 3 * sigma2(i_variation) + M(i_M));
+        entropy_y(i_M, i_variation) = ...
+            entropy_y(i_M, i_variation) - ...
+            1 / 2 * log2(2 * pi * exp(1) * sigma2(i_variation)^2);
+        fprintf('i_M = %f, s2 = %f\n', i_M, sigma2(i_variation))
+    end
+    fprintf('The %d th line finished\n', i_M)
+end
+\end{lstlisting}
+在上面的方法中，我们对不同的M和不同的噪声进行了求解。我们使用integral函数进行数值上的积分求解。
+在数值的设定上，我们假设A=1，如下
+\begin{lstlisting}
+% In the function, the A is set as "1" for convenience and the noise is set
+% as "sigma2" as a relative parameters, note here the s2 is the standard
+% variantion, instead of its square
+A = 1;
+sigma2 = 0:0.1:30;
+M = 1:10;
+\end{lstlisting}
+sigma2则是我们的\(\sigma_2\),代表噪声的变化，单位上也和A的单位进行了归一化。
+上面函数中的最为关键的entropy\_type1函数如下，这个计算的是连续事件的信息量。
+\begin{lstlisting}
+function entropy = entropy_type1(x, M, sigma)
+%The information of single event, both continous and discrete.
+%
+% Function of this function is to calculate the entropy of a certain 
+% variable, which might not have a expression and only numerical resutls
+% are available
+%
+% Written by Tingwu Wang, Tsinghua University, for the course project
+% 27/09/2015
+prob = 0;
+sym_prob = 1 / M;
+coff1 = 1 / (sqrt(2 * pi) * sigma);
+coff2 = 2 * sigma .^2;
+for i_symbol = 0: 1: M - 1
+    %prob = prob + sym_prob * normpdf(x, i_symbol, sigma);
+    prob = prob + sym_prob * coff1 * exp(-(x - i_symbol).^2 / coff2);
+end
+entropy = entropy_cal(prob);
+\end{lstlisting}
+其中的entropy\_cal是一个简单的计算xlog(x)的函数。
+值得注意的是，我们比较了使用系统自带的normpdf函数和我们手动写一个计算概率的情况，发现如果我们自己重写，速度是快很多的。
+\subsection{结果图}
+经过上面的算法，我们已经可以计算出我们的结果了。画图代码如下：
+\begin{lstlisting}
+% plot the results
+legend_name = cell(length(M) + 1, 1);
+cmap = hsv(length(M) + 1);  % Creates a 6-by-3 set of colors from the HSV colormap
+for i_M = 1: 1: length(M)
+  plot(sigma2, entropy_y(i_M, :), 'Color', cmap(i_M, :));
+  hold on;
+  box on;
+  grid on;
+  legend_name{i_M} = ['M = ' num2str(i_M)];
+end
+
+% awgn channel
+awgn_entropy = zeros(1, length(sigma2));
+
+for i_variation = 1: 1: length(sigma2)
+    awgn_entropy(i_variation) = 1 / 2 * log2(1 + 1 / sigma2(i_variation));
+end
+legend_name{length(M) + 1} = 'AWGN';
+plot(sigma2, awgn_entropy(:), 'Color', cmap(length(M) + 1, :));
+legend(legend_name)
+\end{lstlisting}
+结果如下：
+\begin{figure}	
+\begin{center}
+		\includegraphics[width=1\linewidth]{capacity.eps}
+		\caption{信道容量示意图}
+\end{center}
+\end{figure}
+\subsubsection{结果分析}
+从结果来看，我们可以得出以下几个结论。\\
+1.随着噪声的增加，我们的capacity不断减少。不过始终是大于0的，这和我们的预测相符合。\\
+2.随着我们使用的信源数量增加，即M不断增加，我们可以达到的预期capacity也是会增加的，这符合我们的预期。\\
+3.可以看到，当噪声比较小的情况下，我们的所求得的capacity小于我们的AWGN，但是当噪声较大的时候，AWGN信道反而差于我们的情况。当然，我们应该注意，千万不要把两种情况作出不合适的对比。因为我们知道，AWGN只有在我们的输入信号是功率受限的时候才是最优化的。所以出现这种信道小于我们特殊情况的信道是正常的。\\
+4.在其中我们设置了一个验证，当M=1的时候，我们的信道不具备任何变化，因此信道应该为0。这和我们的结果吻合。
+5.在图2中，我们可以看到，随着我们的M不断增加，信道容量不断增加，而且没有趋于饱和迹象。
+\begin{figure}	
+\begin{center}
+		\includegraphics[width=1\linewidth]{capacity_2.eps}
+		\caption{信道容量示意图,M=1:1:100}
+\end{center}
+\end{figure}
+\subsection{信道容量随信号平移的变化}
+观察我们的新的信道，有下列式子成立
+\begin{equation}
+\begin{aligned}
+I(X;\bar{Y}|b) & = H(\bar{Y}) - H(\bar{Y}|X)\\
+	   & = -\int_{p(\bar{y}) \neq 0, -\infty}^{\infty}p(\bar{y})\mbox{log}p(\bar{y})d\bar{y} -\int_{p(\bar{y}|x) \neq 0, -\infty}^{\infty}p(\bar{y}|x)\mbox{log}p(\bar{y}|x)d\bar{y}\\
+	   & \overset{a}= -\int_{p(y) \neq 0, -\infty}^{\infty}p(y)\mbox{log}p(y)dy - \int_{p(y|x) \neq 0, -\infty}^{\infty}p(y|x)\mbox{log}p(y|x)dy\\
+	   & = I(X;Y),\\
+	   &\text{where a means:  } y = \bar{y} + b
+\end{aligned}
+\end{equation}
+可见我们的信道容量和我们的b无关。
+\end{CJK}
+\end{document}
