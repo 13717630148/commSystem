@@ -21,7 +21,7 @@ f2_high = 15e3;
 t = 0: T_period / real_world_fss: T_period;  % t is the time slot
 
 % ------------------------ simulation begins ---------------------------- %
-original_white_signal = rand(1, length(t))* 2 * sqrt(3);
+original_white_signal = rand(1, length(t)) * sqrt(3);
 f_original_white_signal = fft(original_white_signal);
 
 % the signal received from the s1
@@ -49,6 +49,7 @@ s2 = s2 * sqrt(source_power2);
 
 % plot the received signal s = s1 + s2
 s = real(s1 + s2);
+figure
 plot(t, real(s)); title('The received time signal')  % origin time signal 
 
 
@@ -67,9 +68,10 @@ title('The sampled signal spectrum');
 
 
 % ----------------------------------------------------------------------- %
-L = 64;
-V = 4;
-dV = 2 * V / L;
+n = 5;
+L = 2 ^(n - 1);
+V = sqrt(3) * 2;
+dV = V / L;
 
 quan_signal = (floor(sample_signal / dV) + 0.5) * dV;
 
@@ -101,6 +103,44 @@ subplot(2,1,2);
 plot((0 : length(sample_signal) - 1) / length(sample_signal) * fs, ...
     abs(Frequency .* mask_sample)); title('The recovered signal spectrum');
 
+
+% ----------------------------------------------------------------------- %
+
+error= quan_signal - qs_recovered;
+figure;
+subplot(2,1,1);
+plot(t_sample, error); title('The reconstruction error')
+subplot(2,1,2);
+plot((0 : length(sample_signal) - 1) / length(sample_signal) * fs, ...
+    abs(fft(error))); title('The reconstruction error spectrum');
+
+
+
+
+
+
+
+
+% ----------------------------------------------------------------------- %
+n = 15;
+L = 2 ^(n - 1);
+V = sqrt(3) * 2;
+dV = V / L;
+
+
+quan_signal = (floor(sample_signal / dV) + 0.5) * dV;
+
+t_sample = 0: 1 / fs : T_period;
+
+% ----------------------------------------------------------------------- %
+Frequency = fft(quan_signal);
+mask_sample = ones(1, length(quan_signal));
+mask_sample(t_sample < (f2_low - fs) / fs & ...
+    t_sample > (f1_high - fs) / length(quan_signal)) = 0;
+temp_mask = mask_sample(end : -1: 1);
+mask_sample = min(mask_sample, temp_mask);
+
+qs_recovered = ifft(Frequency .* mask_sample);
 
 % ----------------------------------------------------------------------- %
 
