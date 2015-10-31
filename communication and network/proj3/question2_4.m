@@ -5,12 +5,18 @@
 % 29/10/2015
 % ----------------------------------------------------------------------- %
 clear; clc; close all;
+coff = [10.25, 10.50];
 
+for i_freq = 1: 2
+Coff = coff(i_freq);
 overSampleRate = 100;
 T = 1;
 N = 100 + 1;  % the first one is set as the initial bit
 sampleRate = N * overSampleRate;
 t = 0: 1 / (N * overSampleRate) : T - 1 / (N * overSampleRate);
+
+f = N * Coff;  % the carrier frequency
+phi_0 = 0;
 
 % generate the input source symbols
 sourceGen = rand(1, N);
@@ -30,17 +36,22 @@ for i = 1: 1: N
         2 * sendRelative(i) - 1;
 end
 
-f = N * 10;  % the carrier frequency
-phi_0 = 0;
+% -------------------------- frequency conversion ----------------------- %
+sendFrequencyConversion = zeros(1, N * overSampleRate);
+FrequencyConversion = resample(sendOrigin, 1000, 100 * Coff);
+sendFrequencyConversion(1: length(FrequencyConversion)) = ...
+    FrequencyConversion(:);
 
-send_a = sendOrigin .* cos(2 * pi * f * t + phi_0);  % the bpsk modulation
-send_b = [zeros(1, overSampleRate) send_a(1: end - overSampleRate)];
+send_a = sendFrequencyConversion .* cos(2 * pi * f * t + phi_0);  % the bpsk modulation
+send_b = [zeros(1, overSampleRate * 1000 / (100 * Coff)) ...
+    send_a(1: end - floor(overSampleRate * 1000 / (100 * Coff)))];
 send_c = send_a .* send_b;
 
 lpf_1 = zeros(1, length(send_c)); lpf_1(1: 10) = 1;  % two low pass filter
 y1 = conv(send_c, lpf_1);
-y1 = y1(1:length(send_c));
+y1 = resample(y1, 100 * Coff, 1000);
 
+y1 = y1(1:length(send_c));
 % get the original code
 receiveRelative = zeros(1, N);
 receiveOrigin = zeros(1, N); receiveOrigin(1) = 1;
@@ -52,6 +63,7 @@ receiveOrigin(receiveRelative > 0) = 0;
 receiveOrigin(receiveRelative < 0) = 1;
 
 figure
+title(['The frequncy is ' num2str(Coff) ' times'])
 subplot(6,1,1)
 stem(1: 10, source(1: 10));
 subplot(6,1,2)
@@ -64,3 +76,4 @@ subplot(6,1,5)
 plot(1: 10 * overSampleRate, y1(1: 10 * overSampleRate));
 subplot(6,1,6)
 stem(1: 10, receiveOrigin(1: 10));
+end
