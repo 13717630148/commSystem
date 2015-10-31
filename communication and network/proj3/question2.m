@@ -41,8 +41,6 @@ plot(w, 1 / length(send) * abs(fft(send)) .^ 2);
 
 
 % demodulation begins
-
-close all
 x = send .* cos(2 * pi * f * t + phi_0);
 lpf_1 = zeros(1, length(x)); lpf_1(1: 10) = 1;  % two low pass filter
 lpf_2 = zeros(1, length(x)); lpf_2(1: 12) = 1;

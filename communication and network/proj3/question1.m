@@ -37,13 +37,11 @@ for k = 1 : 1: N
     AMI((k - 1) * sampleRate + 2 : k * sampleRate - 3) = send(k);
 end
 subplot(2,1,1); stem(source(1:20));
-title('The original AMI code');
+title('The original code');
 subplot(2,1,2); plot(t(1:160),AMI(1:160));
 title('Result after sampled');
 
-figure;
-subplot(2,1,1); stem(send(1:20));
-title('The original AMI code');
+
 % The HDB3 code
 zeroCounter = 0; odd_evenCounter=0;
 HDB3 = zeros(1, sampleRate * N);
@@ -67,13 +65,11 @@ for k = 1 : 1: N
     HDB3((k-1) * sampleRate + 3 : k * sampleRate - 2) = send(k);
 end
 
-subplot(2,1,2); stem(send(1:20));
-title('The original AMI code');
 figure;
 subplot(2,1,1); plot(t(1:160),AMI(1:160));
 title('The original AMI sampled');
 subplot(2,1,2); plot(t(1:160),HDB3(1:160));
-title('Result after HDB3 sampled');
+title('Result after HDB3 sampled'); 
 
 % The mile code码
 mile = zeros(1, sampleRate * N);
@@ -99,14 +95,19 @@ subplot(2,1,1);
 stem(source(1:20));
 subplot(2,1,2);
 plot(t(1:160),mile(1:160));
-title('Result after mili sampled');
+title('Result after mili sampled');ylim([-1.5 1.5])
 
-figure; SPower_AMI = 1 / length(AMI) * abs(fft(AMI)) .^ 2;
+figure; 
+subplot(3,1,1);
+SPower_AMI = 1 / length(AMI) * abs(fft(AMI)) .^ 2;
 plot(SPower_AMI);
 
-figure; SPOWER_HDB = 1 / length(HDB3) * abs(fft(HDB3)).^2;
+
+subplot(3,1,2);
+SPOWER_HDB = 1 / length(HDB3) * abs(fft(HDB3)).^2;
 plot(SPOWER_HDB);
 
-figure; SPOWER_MILE = 1 / length(mile) * abs(fft(mile)).^2;
+subplot(3,1,3);
+SPOWER_MILE = 1 / length(mile) * abs(fft(mile)).^2;
 plot(SPOWER_MILE);
 

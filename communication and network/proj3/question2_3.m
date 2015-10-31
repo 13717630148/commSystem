@@ -30,7 +30,7 @@ for i = 1: 1: N
         2 * sendRelative(i) - 1;
 end
 
-f = N * 10;  % the carrier frequency
+f = N * 10.25;  % the carrier frequency
 phi_0 = 0;
 
 send_a = sendOrigin .* cos(2 * pi * f * t + phi_0);  % the bpsk modulation
